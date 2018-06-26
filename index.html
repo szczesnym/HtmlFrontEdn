@@ -1,0 +1,166 @@
+<html>
+	<HEAD>
+		<meta charset="utf-8">
+		<script src="/js/jquery-3.3.1/jquery.min.js"></script>
+	  	<script src="/js/bootstrap-4.0.0/bootstrap.min.js"></script>
+		<script src="/js/jqueryui-1.8.16/jquery-ui.min.js"></script>
+		<script>
+
+			function searchTasks() {
+				var apiRoot = 'http://localhost:8080/v1/task/';
+	   			var requestUrl = apiRoot + 'searchTasks?searchPattern='+$("#searchPattern").val();
+
+				$("#tasksTable > tbody").empty();
+			    $.ajax({
+			      url: requestUrl,
+			      method: 'GET',
+			      dataType: "json"
+			    })
+			    .done(function(res) {
+			    			var rowInfo = '<tr class="table-warning"><td colspan=4>Search results</td></tr>';
+			    			$('#tasksTable').find('tbody').append(rowInfo);
+							res.forEach(
+								function(el) {
+											var f0 = '<td id=id_'+ el.id + '>' + el.id + '</td>';
+		  							        var f1  = '<td id=title_'+ el.id + '>' + el.title + '</td>';
+									        var f2  = '<td id=content'+ el.id + '>' + el.content + '</td>';
+									        var f3 = '<td><button id=delete' + el.id +' type="button" class="btn btn-danger" onClick="deleteLineTask('+ el.id +')">Delete item</button></td>';
+									        var row = '<tr id='+ el.id + '>' + f0 + f1 + f2 + f3 + '</tr>';
+									        $('#tasksTable').find('tbody').append(row);
+					        				}
+					        			)
+								});
+
+			}
+
+			function addLineTask() {
+				$("#tasksTable > tbody").empty();
+				if(document.querySelector('#taskPostForm') == null) {
+		        	var row = ' <tr> <form id="taskPostForm">' + 
+		        		 '<div class="form-group">' +
+		        				'<td> </td>' +
+		        				'<td><input class="form-control" type="text" id="postTitle"></td>' +
+		        				'<td><input class="form-control" type="text" id="postContent"></td>' +
+		       					'<td><button type="button" class="btn btn-primary" onClick="postTaskData()">Add</button> </td>' +
+		        		'</div>' +
+		        	'</form> </tr> ';
+		        	$('#tasksTable').find('tbody').append(row);
+		    	}
+		    	getAllTask(0);
+			}
+
+			function postTaskData() {
+				var apiRoot = 'http://localhost:8080/v1/task/';
+				var postUrl = 'createTask';
+				
+				$.ajax({
+					    url         : apiRoot + postUrl,				    
+					    type        : "post",
+					    contentType : 'application/json', 
+					    dataType    : 'json', 
+					    data        : JSON.stringify({ 
+								        title : $('#postTitle').val(),
+								        content : $('#postContent').val()
+	    								})				        	
+
+				})
+				.always(function() {
+							$("#tasksTable > tbody").empty();
+							getAllTask(1);
+							})
+				.fail(function(XMLHttpRequest, textStatus, errorThrown) {
+	    				 console.log(XMLHttpRequest);
+	    				 console.log(textStatus);
+	  					}
+					);
+			}
+
+			function getAllTask(clearBefore) {
+				var apiRoot = 'http://localhost:8080/v1/task/';
+	   			var requestUrl = apiRoot + 'getTasks';
+
+				if(clearBefore ==1 ) $("#tasksTable > tbody").empty();
+			    $.ajax({
+			      url: requestUrl,
+			      method: 'GET',
+			      dataType: "json"
+			      
+			    })
+			    .done(function(res) {
+							res.forEach(
+								function(el) {
+											var f0 = '<td id=id_'+ el.id + '>' + el.id + '</td>';
+		  							        var f1  = '<td id=title_'+ el.id + '>' + el.title + '</td>';
+									        var f2  = '<td id=content'+ el.id + '>' + el.content + '</td>';
+									        var f3 = '<td><button id=delete' + el.id +' type="button" class="btn btn-danger" onClick="deleteLineTask('+ el.id +')">Delete item</button></td>';
+									        var row = '<tr id='+ el.id + '>' + f0  + f1 + f2 + f3 + '</tr>';
+									        $('#tasksTable').find('tbody').append(row);
+					        				}
+					        			)
+								});
+				}
+
+			function deleteLineTask(id) {
+				var apiRoot = 'http://localhost:8080/v1/task/';
+				var postUrl = 'deleteTask?taskId='+id;
+				
+				if(confirm("Are you sure you want to delete this Record?")) {
+					$.ajax({
+					    url         : apiRoot + postUrl,				    
+					    type        : "delete", //typ połączenia
+					    success: function(){   
+							getAllTask(1);
+    						},
+    					fali: function() {alert("Delete failed !!!")}
+						});
+					}
+				}
+
+			$(document).ready(function() {
+				getAllTask(1);
+			});
+		</script>
+	</HEAD>
+
+	<body>
+		<link rel="stylesheet" href="/css/bootstrap-4.0.0/bootstrap.min.css">
+		<div class="container" id="navBar">
+			</div>
+		<div class="container">
+			<nav class="navbar navbar-expand-lg navbar-light bg-light">
+			  <a class="navbar-brand">Crud Tasks</a>
+			  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			    <span class="navbar-toggler-icon"></span>
+			  </button>
+			  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+			    <ul class="navbar-nav mr-auto">
+			      <li class="nav-item active">
+			        <a class="nav-link" href="#" onClick="getAllTask(1)">Show all<span class="sr-only">(current)</span></a>
+			      </li>
+			      <li class="nav-item">
+			        <a class="nav-link" href="#" onClick="addLineTask()">Add</a>
+			      </li>
+			    </ul>
+			    <form class="form-inline my-2 my-lg-0">
+			      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" id="searchPattern">
+			      <button class="btn btn-outline-success my-2 my-sm-0" onclick="searchTasks()">Search</button>
+			    </form>
+			  </div>
+			</nav>
+			<table class="table table-hover" id="tasksTable">
+			  <thead>
+			    <tr>
+			      <th scope="col">#</th>
+			      <th scope="col">Name</th>
+			      <th scope="col">Content</th>
+			      <th scope="col">Action</th>
+			    </tr>
+			  </thead>
+			  <tbody>
+			  </tbody>
+			</table>
+			<div id="content" name="content">
+			</div>
+		</div> 
+	</body>
+</html>
